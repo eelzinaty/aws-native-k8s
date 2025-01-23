@@ -1,0 +1,44 @@
+# argocd-values.yaml
+
+global:
+  domain: general-ingress-1355993200.eu-central-1.elb.amazonaws.com
+  # Add tolerations to schedule on tainted nodes
+  tolerations:
+  - key: "CriticalAddonsOnly"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+server:
+  ingress:
+    enabled: true
+    controller: aws
+    # Annotations to integrate with ALB Ingress Controller
+    annotations:
+      alb.ingress.kubernetes.io/group.name: "general-ingress"
+      alb.ingress.kubernetes.io/scheme: "internet-facing" # Change to "internal" if needed
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 8080}]' # Specify the desired port
+    # Define the host without subdomain
+    # hosts:
+    # - host: general-ingress-1355993200.eu-central-1.elb.amazonaws.com # Replace with your actual domain
+    #   paths:
+    #   - path: /
+    #     pathType: Prefix
+    # Disable TLS since HTTPS is not required
+    tls: []
+
+  service:
+    type: NodePort # Use NodePort to allow ALB to route to a specific port
+    # Optionally specify the node port if you want a fixed port
+    # nodePort: 32080  # Example port; ensure it's within the allowed range
+
+controller:
+  replicas: 1
+
+repoServer:
+  replicas: 1
+
+applicationSet:
+  replicaCount: 1
+
+redis-ha:
+  enabled: false

@@ -1,0 +1,55 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: general-ingress
+  namespace: ingress
+  labels:
+    app: general-ingress
+  annotations:
+    # Ingress Core Settings - https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.3/guide/ingress/annotations/
+    alb.ingress.kubernetes.io/group.name: general-ingress
+    alb.ingress.kubernetes.io/load-balancer-name: "general-ingress"
+    # kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    lb.ingress.kubernetes.io/target-type: ip
+    # Health Check Settings
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-port: traffic-port
+    #Important Note:  Need to add health check path annotations in service level if we are planning to use multiple targets in a load balancer
+    #alb.ingress.kubernetes.io/healthcheck-path: /usermgmt/health-status
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/success-codes: '200'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
+    ## SSL Settings
+    #alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}, {"HTTP":80}]'
+    #alb.ingress.kubernetes.io/certificate-arn: '${acm_arn}'
+    #alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-1-2017-01 #Optional (Picks default if not used)
+    # SSL Redirect Setting
+    #alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # Default Backend
+    alb.ingress.kubernetes.io/actions.default-backend: '{"type":"fixed-response","fixedResponseConfig":{"contentType":"text/plain","statusCode":"200","messageBody":"Welcome"}}'
+    alb.ingress.kubernetes.io/group.order: '1000'
+    # External DNS - For creating a Record Set in Route53
+    #external-dns.alpha.kubernetes.io/hostname: '${domain}'
+    # NOT APPLICABLE - Specifies which nodes to include in the target group registration for instance target type.
+    # alb.ingress.kubernetes.io/target-node-labels: 'karpenter.sh/nodepool=default'
+spec:
+  # defaultBackend:
+  #   service:
+  #     name: default-backend
+  #     port:
+  #       name: use-annotation
+  ingressClassName: alb
+  rules:
+  #- host: ssldemo.kubeoncloud.com    # SSL Setting (Optional only if we are not using certificate-arn annotation)
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: default-backend
+            port:
+              name: use-annotation
